@@ -1,4 +1,4 @@
-# Projektarbeite
+# Projektarbeit
 *"Realtime communication using 5G to enable deep learning on the cloud for robotic applications."*
 
 ## Motivation
@@ -75,3 +75,4 @@ $ python remote_device.py
 > The order of script execution should be followed as shown above, even in setups involving only one device.
 
 
+# Project Planning and Milestones *(coming soon)*
