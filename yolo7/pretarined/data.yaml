@@ -1,0 +1,14 @@
+names:
+- CRACKS
+- JOINT
+- MARKING
+nc: 3
+roboflow:
+  license: CC BY 4.0
+  project: rigid-pavement-vuycg
+  url: https://universe.roboflow.com/thesis-tpsxa/rigid-pavement-vuycg/dataset/2
+  version: 2
+  workspace: thesis-tpsxa
+test: ../test/images
+train: RIGID-PAVEMENT-2/train/images
+val: RIGID-PAVEMENT-2/valid/images
