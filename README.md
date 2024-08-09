@@ -17,8 +17,14 @@ For this demonstration, the execution sequence is similar to previous examples, 
 
    *Example of the page layout:*
    ![Example Page Layout](/etc/localhost_view_example.png)
+   
+2. **Run the Signaling Server Script:**
+   - In the terminal, execute the following command to start the signaling server:
+     ```bash
+     python signaling_server.py
+     ```
 
-2. **Run the Host Device Script:**
+3. **Run the Host Device Script:**
    - In the terminal, execute the following command to start the host device:
      ```bash
      python host_device_execution.py
@@ -41,9 +47,9 @@ For this demonstration, the execution sequence is similar to previous examples, 
      ```
      This confirms that the web interface is active.
 
-3. **Position the Camera:**
+4. **Position the Camera:**
    - Position the camera in front of the bottom monitor. This monitor should simulate the robot's view (represented by a green rectangle).
    - The top monitor will display the crack path that the robot needs to navigate.
 
-4. **Run the Remote Device Script:**
+5. **Run the Remote Device Script:**
    - Now, execute the `remote_device_demo.py` script to begin the demonstration.
