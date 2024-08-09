@@ -18,7 +18,11 @@ async def handler(websocket, path):
     connected.remove(websocket)
     print("[Server] Connection closed.")
 
-start_server = websockets.serve(handler, "localhost", 8080)
+#start_server = websockets.serve(handler, "localhost", 8080)
+#start_server = websockets.serve(handler, "192.168.169.191", 8080)
+start_server = websockets.serve(handler, "172.21.1.173", 8080)
+#start_server = websockets.serve(handler, "160.85.114.134", 8080)
 
 asyncio.get_event_loop().run_until_complete(start_server)
+
 asyncio.get_event_loop().run_forever()
