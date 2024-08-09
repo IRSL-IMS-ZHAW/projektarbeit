@@ -1,78 +1,49 @@
-# Projektarbeit
-*"Realtime communication using 5G to enable deep learning on the cloud for robotic applications."*
+# Demonstration Instructions
 
-## Motivation
-- Machine Learning models often require substantial computational resources. In robotics, robust hardware typically equates to increased volume, weight, and power consumption.
-- Off-board execution of deep learning models represents a significant advancement in robotics. It facilitates enhancements and customization of the control system while also boosting its autonomous decision-making capabilities.
-- A crucial requirement for these technologies is the development of a system capable of managing input, processing, and decision-making in real-time, as perceived by humans. This system must have latency low enough to meet the specific requirements of the application.
+For this demonstration, the execution sequence is similar to previous examples, with one crucial addition: **You must open a browser and navigate to `http://localhost:8000` before executing `remote_device_demo.py`.**
 
-## Project (Main) Dependencies
-* Ubuntu 22.04
-* Python 3.10
-* DepthAI
-> Follow the installation instructions on the official website: https://docs.luxonis.com/projects/api/en/latest/install/
+### Step-by-Step Guide
 
-## Installing Requirements
-Create an environment using:
-```
-$ conda create --name <env> --file requirements_conda.txt
-```
-Alternatively, using pip:
-```
-$ conda create --name <env> python=3.10 pip
-$ pip install -r requirements.txt
-```
-> Note: Both requirements files are available in this repository.
+1. **Start the Web Interface:**
+   - Open your preferred web browser.
+   - Navigate to `http://localhost:8000`.
+   
+   This page will display:
+   - The path that the algorithm should track.
+   - The current camera view.
+   - The layers added by the AI model.
 
-# Project Initialization
-### 1. Navigate to the project repository
-```
-$ cd /path/to/projectarbeite
-```
-### 2. Activate the virtual environment
-```
-$ conda activate <env>
-```
-> Replace `<env>` with your virtual environment's actual name.
+   **Note:** This page is optimized for use with two monitors stacked vertically in a landscape orientation. To view the full content, extend the browser window from the top monitor to the bottom one.
 
-### 3. Setup the address
-For debugging purposes, the server should be hosted and accessed through "localhost" (0.0.0.0) on port 8080.
+   *Example of the page layout:*
+   ![Example Page Layout](/etc/localhost_view_example.png)
 
-```
-# host_device.py:
-await connection.connect("ws://localhost:8080")
-```
-```
-# remote_device.py:
-async with websockets.connect("ws://localhost:8080") as ws:
-```
-```
-# signaling_server.py:
-start_server = websockets.serve(handler, "localhost", 8080)
-```
+2. **Run the Host Device Script:**
+   - In the terminal, execute the following command to start the host device:
+     ```bash
+     python host_device_execution.py
+     ```
 
-#### Note: When working with two different devices, the host machine's IP address needs to be provided
+   - You should see output similar to the following:
+     ```bash
+     YOLOv5 🚀 2024-4-17 Python-3.10.14 torch-2.2.2+cu121 CUDA:0 (NVIDIA GeForce RTX 2060, 5918MiB)
+     
+     Fusing layers...
+     Model summary: 325 layers, 37853264 parameters, 0 gradients, 141.9 GFLOPs
+     Model Loaded Successfully
+     HTTP server running on http://localhost:8000
+     Connecting to WebSocket at ws://172.21.1.173:8080
+     ```
 
-```
-("ws://localhost:8080")        -> ("ws://192.168.X.X:8080")
-(handler, "localhost", 8080)   -> (handler, "ws://192.168.X.X", 8080)
-```
-> Check your own IP address by running `$ ifconfig` or similar commands.
+   - Pay particular attention to the line:
+     ```plaintext
+     HTTP server running on http://localhost:8000
+     ```
+     This confirms that the web interface is active.
 
-### 4. Run the scripts 
-a) Host device
-```
-$ python signaling_server.py
-$ python host_device.py
-```
+3. **Position the Camera:**
+   - Position the camera in front of the bottom monitor. This monitor should simulate the robot's view (represented by a green rectangle).
+   - The top monitor will display the crack path that the robot needs to navigate.
 
-b) Remote device
-
-With the Oak camera connected to the device, run:
-```
-$ python remote_device.py
-```
-> The order of script execution should be followed as shown above, even in setups involving only one device.
-
-
-# Project Planning and Milestones *(coming soon)*
+4. **Run the Remote Device Script:**
+   - Now, execute the `remote_device_demo.py` script to begin the demonstration.
