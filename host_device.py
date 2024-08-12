@@ -1,22 +1,56 @@
+import subprocess
 import asyncio
 import json
 import websockets
 from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceCandidate
 import cv2
+import sys
+import time
 
-# Data channel
+sys.path.insert(0, '/home/rafael2ms/Dev/crack_seg_yolov7/yolov7/seg/segment')
+
+from frameparameter_E_fast import load_model, run_seg
+
+#============================================================================
+
+import aiohttp
+from aiohttp import web
+import aiohttp_session
+import socketio
+import base64
+import cv2
+
+sio = socketio.AsyncServer(async_mode='aiohttp', cors_allowed_origins='*')
+app = web.Application()
+sio.attach(app)
+n_print = 0
+
+async def index(request):
+    return web.FileResponse('index.html')
+
+app.router.add_get('/', index)
+
 frame_info_channel = None
-display_frame_interval = 30 
+#display_frame_interval = 20
 frame_counter = 0
 
+model, stride, names, device = load_model(weights='/home/rafael2ms/Dev/crack_seg_yolov7/yolov7/pretrained/best.pt')
+save_image = False
+frame_mask = None
+frame_pca = None
+
+
 class WebRTCConnection:
-    def __init__(self):
+    def __init__(self, websocket_url):
         self.pc = RTCPeerConnection()
+        self.websocket_url = websocket_url  # Store the WebSocket URL
         self.ws = None  # Initialize WebSocket client attribute
 
-    async def connect(self, websocket_url):
-        async with websockets.connect(websocket_url) as ws:
+    async def connect(self):#, websocket_url
+        async with websockets.connect(self.websocket_url) as ws:
+            print(f"Connecting to WebSocket at {self.websocket_url}")
             self.ws = ws  # Store the WebSocket client
+            #await self.handle_websocket_communication()
             self.pc.on("connectionstatechange", self.on_connection_state_change)
             self.pc.on("iceconnectionstatechange", self.on_ice_connection_state_change)
             self.pc.on("datachannel", self.on_data_channel)
@@ -71,21 +105,41 @@ class WebRTCConnection:
 
     async def receive_frames(self, track):
         global frame_counter
+        global n_print
+
+        global save_image
+        global frame_mask
+        global frame_pca
+
+
         try:
+            frame_data = 1
+            web_img_delay = time.perf_counter()
+
+
             while True:
                 frame = await track.recv()
-                frame_counter += 1
-                if frame_counter % display_frame_interval == 0:
-                    print(frame_counter)
-                    cv2.imwrite(f"./frames/frame_{frame_counter}.jpg", video_frame_to_ndarray(frame))
+                
+                if (time.perf_counter() - web_img_delay) < 1:
+                    continue
 
-                frameshape = await process_video_frame(frame)
-                if frame_info_channel and frame_info_channel.readyState == "open":
-                    frame_info_channel.send(frameshape)
-                    print(frameshape)
-                else:
-                    print(frame_info_channel)
-                    #print("[RC] Error: frame_info_channel") 
+                web_img_delay = time.perf_counter()
+
+                if (frame):
+                    nframe = video_frame_to_ndarray(frame)
+                    frame_counter += 1
+
+                    frame_data = await process_video_frame(nframe)
+                    
+                    if frame_info_channel and frame_info_channel.readyState == "open":
+                            frame_info_channel.send(f'{frame_data}')
+                            ###print(frame_data)
+                    else:
+                        print(f"[RC] Error: {frame_info_channel}") 
+
+                    if f'{frame_data}' != '(0, 0)':
+                        n_print += 1
+
 
         except Exception as e:
             print(f"[RC] Error receiving frame: {e}")
@@ -95,21 +149,48 @@ def video_frame_to_ndarray(video_frame):
     img = video_frame.to_ndarray(format='bgr24')
     return img
 
-def hard_frame_process(frame):
-    nframe = video_frame_to_ndarray(frame)
-    gray_frame = cv2.cvtColor(nframe, cv2.COLOR_BGR2GRAY)
-    shape = gray_frame.shape
-    frameshape = f"{shape[0]},{shape[1]}"
-    return frameshape
+def hard_frame_process(nframe):
+    global model
+    global stride
+    global names
+    global device 
+    global save_image
+    global frame_mask
+    global frame_pca
+    
+    save_image = True
+
+    out = run_seg(model=model, stride=stride, names=names, device=device, im0=nframe,save_img=save_image)
+    command = (out[0], out[1])
+
+    save_image = False
+
+    if out[2] is not None:
+        frame_mask = out[2]
+        cv2.imwrite(f'/home/rafael2ms/Dev/oakmax_webrtc/final_pa/frame_mask_local.jpg', frame_mask)
+
+    if out[3] is not None:
+        frame_pca = out[3]
+        cv2.imwrite(f'/home/rafael2ms/Dev/oakmax_webrtc/final_pa/frame_pca_local.jpg', frame_pca)
+    
+    return command
 
 async def process_video_frame(frame):
     # Offload the blocking operation to a separate thread
     processed_frame = await asyncio.to_thread(hard_frame_process, frame)
     return processed_frame
 
-# Running the signaling process
-async def main():
-    connection = WebRTCConnection()
-    await connection.connect("ws://localhost:8080")
 
-asyncio.run(main())
+async def main():
+
+    # Setup and connect WebRTC in a non-blocking way
+    #connection = WebRTCConnection("ws://localhost:8080")
+    connection = WebRTCConnection("ws://172.21.1.122:8080")
+    #connection = WebRTCConnection("ws://192.168.169.191:8080")
+    #connection = WebRTCConnection("ws://160.85.114.134:8080")
+    webrtc_task = asyncio.create_task(connection.connect())
+
+    await asyncio.gather(webrtc_task)
+
+if __name__ == "__main__":
+    asyncio.run(main())
